@@ -78,13 +78,22 @@ count(*) totcount%s
 from (%s) sub
 group by sub.symptom;")
 
+squares_s <- ("SELECT
+sub.symptom,
+sum( (sub.patient == 1) and (sub.physician==1) ) yy,
+sum( (sub.patient == 1) and (sub.physician==0) ) yn,
+sum( (sub.patient == 0) and (sub.physician==1) ) ny,
+sum( (sub.patient == 0) and (sub.physician==0) ) nn
+from (%s) sub
+group by sub.symptom;")
+
 negag_q <- sprintf(negag_s,qa,q)
 posag_q <- sprintf(posag_s,qa,q)
 totag_q <- sprintf(totag_s,qa,q)
 patcount_q <- sprintf(patcount_s,qa,q)
 phycount_q <- sprintf(phycount_s,qa,q)
 totcount_q <- sprintf(totcount_s,qa,q)
-
+squares_q <-sprintf(squares_s,q)
 
 negag <- dbGetQuery(con, negag_q)
 posag <- dbGetQuery(con, posag_q)
@@ -92,8 +101,17 @@ totag <- dbGetQuery(con, totag_q)
 patcount <- dbGetQuery(con, patcount_q)
 phycount <- dbGetQuery(con, phycount_q)
 totcount <- dbGetQuery(con, totcount_q)
+squares <- dbGetQuery(con, squares_q)
 
-li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, patcount, phycount, totcount))
+squares$po = ( squares$yy + squares$nn ) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$my = (squares$yy + squares$yn) * (squares$yy + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$mn = (squares$nn + squares$yn) * (squares$nn + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn + squares$ny)
+kstr <- paste("k",qa,sep="")
+squares[c( kstr )] = (squares$po - squares$pe) / (1 - squares$pe)
+kslice <- squares[c("sub.symptom",kstr)]
+
+li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, patcount, phycount, totcount, kslice))
 
 }
 
