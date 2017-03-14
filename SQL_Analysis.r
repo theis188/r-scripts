@@ -4,7 +4,8 @@ rs <- dbGetQuery(con, "SELECT distinct symptom FROM psych where qa=\"MSAS\";")
 
 li <- list()
 
-for (i in list( c("MSAS","0","0"),c("FACT","1","2") ) ) { 
+# for (i in list( c("MSAS","0","0"),c("FACT","1","3") ) ) { ## LOW CUTOFF
+for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
 
 qa = i[1]
 lim = i[2]
@@ -115,5 +116,5 @@ li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag,
 
 }
 
-Reduce(function(...) merge(..., all=TRUE), li)
+write.xlsx( Reduce(function(...) merge(..., all=TRUE), li) , "D:/R/RScripts/Hamhoon/ham.xlsx" )
 
