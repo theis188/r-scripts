@@ -1,58 +1,88 @@
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 
-rs <- dbGetQuery(con, "SELECT symptom FROM psych where qa=\"MSAS\";")
+sub <- sprintf("SELECT 
+ae.mrn, ae.symptom, ae.tpt, ae.result adv, (r.response='Y') phys
+FROM adverse_breakout ae
+JOIN ros r
+on ae.mrn = r.mrn
+and ae.tpt = r.tpt
+and ae.symptom = r.symptom
+",qqq)
 
-ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss'"
+qqqq <- sprintf("CREATE VIEW adverse_breakout AS
+              %s;",qqq)
 
-# a.mrn, a.symptom, a.start, a.end, m.t1, m.t3
-q <- ("SELECT a.symptom, COUNT(*)
-FROM adverse a
-JOIN master_list m
-ON m.mrn = a.mrn
-WHERE m.t1 IS NOT NULL
-AND m.t2 IS NOT NULL
-AND m.t3 IS NOT NULL
-AND ((a.end BETWEEN m.t1 AND m.t3) OR 
-(a.start BETWEEN m.t1 AND m.t3) OR 
-(a.start<m.t1 AND (a.end>m.t1 OR a.end IS NULL) ) )
-AND a.symptom IN (%s)
-GROUP BY a.symptom
-;")
+dbExecute(con, qqqq)
 
-q <- sprintf(q,ros_symp)
+totag_s <- ("SELECT
+  sub.symptom,
+            sum(sub.phys==sub.adv)*1.0/count(*) totag
+            from (%s) sub
+            group by sub.symptom;")
 
-rs <- dbGetQuery(con, q)
+posag_s <- ("SELECT
+            sub.symptom,
+            sum(sub.phys==sub.adv)*1.0/count(*) posag
+            from (%s) sub
+            where (sub.phys==1) OR (sub.adv==1)
+            group by sub.symptom;")
 
-rs
+negag_s <- ("SELECT
+            sub.symptom,
+            sum(sub.phys==sub.adv)*1.0/count(*) negag
+            from (%s) sub
+            where (sub.phys==0) OR (sub.adv==0)
+            group by sub.symptom;")
 
-qq <- ("SELECT distinct a.mrn
-FROM adverse a
-  JOIN master_list m
-  ON m.mrn = a.mrn
-  WHERE m.t1 IS NOT NULL
-  AND m.t2 IS NOT NULL
-  AND m.t3 IS NOT NULL
-  AND ((a.end BETWEEN m.t1 AND m.t3) OR 
-  (a.start BETWEEN m.t1 AND m.t3) OR 
-  (a.start<m.t1 AND (a.end>m.t1 OR a.end IS NULL) ) )
-  AND a.symptom IN (%s)
-  ")
+aecount_s <- ("SELECT
+               sub.symptom,
+               sum(sub.adv) patcount
+               from (%s) sub
+               group by sub.symptom;")
 
-qq <-sprintf(qq,ros_symp)
+phycount_s <- ("SELECT
+               sub.symptom,
+               sum(sub.phys) phycount
+               from (%s) sub
+               group by sub.symptom;")
 
-qqq <- ("SELECT r.symptom, sum(r.response='Y') count
-        FROM ros r
-        JOIN (%s) m
-        ON r.mrn = m.mrn
-        GROUP BY r.symptom
-        ;")
+totcount_s <- ("SELECT
+               sub.symptom,
+               count(*) totcount
+               from (%s) sub
+               group by sub.symptom;")
 
-qqq <- sprintf(qqq,qq)
+squares_s <- ("SELECT
+              sub.symptom,
+              sum( (sub.adv == 1) and (sub.phys==1) ) yy,
+              sum( (sub.adv == 1) and (sub.phys==0) ) yn,
+              sum( (sub.adv == 0) and (sub.phys==1) ) ny,
+              sum( (sub.adv == 0) and (sub.phys==0) ) nn
+              from (%s) sub
+              group by sub.symptom;")
 
-rs <- dbGetQuery(con, qqq)
+negag_q <- sprintf(negag_s,sub)
+posag_q <- sprintf(posag_s,sub)
+totag_q <- sprintf(totag_s,sub)
+aecount_q <- sprintf(aecount_s,sub)
+phycount_q <- sprintf(phycount_s,sub)
+totcount_q <- sprintf(totcount_s,sub)
+squares_q <-sprintf(squares_s,sub)
 
-rs
+negag <- dbGetQuery(con, negag_q)
+posag <- dbGetQuery(con, posag_q)
+totag <- dbGetQuery(con, totag_q)
+aecount <- dbGetQuery(con, aecount_q)
+phycount <- dbGetQuery(con, phycount_q)
+totcount <- dbGetQuery(con, totcount_q)
+squares <- dbGetQuery(con, squares_q)
 
+squares$po = ( squares$yy + squares$nn ) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$my = (squares$yy + squares$yn) * (squares$yy + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$mn = (squares$nn + squares$yn) * (squares$nn + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$k = (squares$po - squares$pe) / (1 - squares$pe)
+kslice = kslice <- squares[c("sub.symptom","k")]
 
-
+Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, aecount, phycount, totcount, kslice))
 

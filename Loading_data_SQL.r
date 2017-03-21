@@ -205,7 +205,78 @@ for (i in 1:nrow( adverse.events ) ) {
 rs <- dbGetQuery(con, "SELECT * FROM adverse limit 30;")
 rs
 
+sql_symp <- "SELECT 'Dizzy' symptom UNION SELECT 'Vomit' UNION SELECT 'Constipation' UNION SELECT 'Appetite' UNION SELECT 'Fatigue' UNION SELECT 'Nausea' UNION SELECT 'Pain' UNION SELECT 'Sleep' UNION SELECT 'SOB' UNION SELECT 'Cough' UNION SELECT 'Wt Loss'"
+ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss'"
 
+q <- ("SELECT a.mrn,a.symptom,
+      max(
+      (a.start < date(m.t1,'-7 days') 
+        AND ( (a.end > date(m.t1,'-7 days') )
+          OR ( a.end IS NULL ) ) ) 
+      ) as t1_ad,
+      max(
+      (a.start < date(m.t2,'-7 days') 
+        AND ( (a.end > date(m.t2,'-7 days') )
+          OR ( a.end IS NULL ) ) ) 
+      ) as t2_ad,
+      max(
+      (a.start < date(m.t3,'-7 days') 
+        AND ( (a.end > date(m.t3,'-7 days') )
+          OR ( a.end IS NULL ) ) ) 
+      ) as t3_ad
+      FROM adverse a
+      JOIN master_list m
+      ON a.mrn = m.mrn
+      WHERE a.symptom IN (%s)
+      GROUP BY a.mrn,a.symptom
+      ;")
+
+q <- sprintf(q,ros_symp)
+
+rs <- dbGetQuery(con, q)
+
+qq <- sprintf("CREATE VIEW adcount AS
+              %s",q)
+
+dbExecute(con, qq)
+
+qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
+        exists(select 1 from adcount
+        where ((adcount.mrn = m.mrn)
+        and (s.symptom = adcount.symptom)
+        and (adcount.t1_ad = 1))
+        ) result
+        from master_list m, 
+        (%s) s
+        WHERE m.t1 is not null
+      UNION
+        SELECT m.mrn, s.symptom, 2 tpt,
+        exists(select 1 from adcount
+        where ((adcount.mrn = m.mrn)
+        and (s.symptom = adcount.symptom)
+        and (adcount.t2_ad = 1))
+        ) result
+        from master_list m, 
+        (%s) s
+        WHERE m.t2 is not null
+      UNION
+        SELECT m.mrn, s.symptom, 3 tpt,
+        exists(select 1 from adcount
+        where ((adcount.mrn = m.mrn)
+        and (s.symptom = adcount.symptom)
+        and (adcount.t3_ad = 1))
+        ) result
+        from master_list m, 
+        (%s) s
+        WHERE m.t3 is not null
+        ")
+
+qqq <- sprintf(qqq,sql_symp,sql_symp,sql_symp)
+
+qqqq <- sprintf("CREATE VIEW adverse_breakout AS
+                %s;",qqq)
+
+dbExecute(con, qqqq)
 
 # 
 # for (tpt in 1:3) {
