@@ -65,9 +65,9 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
                  from (%s) sub
                  group by sub.symptom;")
   
-  phycount_s <- ("SELECT
+  advcount_s <- ("SELECT
                  sub.symptom,
-                 sum(sub.adverse) phycount%s
+                 sum(sub.adverse) advcount%s
                  from (%s) sub
                  group by sub.symptom;")
   
@@ -90,7 +90,7 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   posag_q <- sprintf(posag_s,qa,q)
   totag_q <- sprintf(totag_s,qa,q)
   patcount_q <- sprintf(patcount_s,qa,q)
-  phycount_q <- sprintf(phycount_s,qa,q)
+  advcount_q <- sprintf(phycount_s,qa,q)
   totcount_q <- sprintf(totcount_s,qa,q)
   squares_q <-sprintf(squares_s,q)
   
@@ -98,7 +98,7 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   posag <- dbGetQuery(con, posag_q)
   totag <- dbGetQuery(con, totag_q)
   patcount <- dbGetQuery(con, patcount_q)
-  phycount <- dbGetQuery(con, phycount_q)
+  advcount <- dbGetQuery(con, phycount_q)
   totcount <- dbGetQuery(con, totcount_q)
   squares <- dbGetQuery(con, squares_q)
   

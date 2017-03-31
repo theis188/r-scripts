@@ -67,7 +67,7 @@ length(unique(master.list$Patient.MRN))
 psych.key.path <- "C:/Users/Matthew/Desktop/Correlative Project/PsychEDCEMR/R Data/Psych Symptom Key.xlsx"
 psych.keys <- read.xlsx(psych.key.path, sheetIndex = 2)
 
-psych.path = paste(root,"LWLC Data File for Collaboration JCK 113016.xlsx",sep="")
+psych.path = paste(root,"LWLC Data File for Collaboration JCK 032017.xlsx",sep="")
 psych.data <- read.xlsx(psych.path,sheetIndex = 1)
 
 dbExecute(con, "DROP TABLE psych")
@@ -83,8 +83,9 @@ tr <- psych.keys[1:48,6:7]
 
 dbGetQuery(con, "SELECT count(*) FROM psych;")
 
-excuses = c("DISCONTINUED")
-coll = c("NOT YET ENTERED","IN PROGRESS","NOT YET CHECKED")
+excuses = c("DISCONTINUED","DID NOT COMPLETE","NOT YET CHECKED")
+coll = c()
+# coll = c("NOT YET ENTERED","IN PROGRESS","NOT YET CHECKED")
 
 # backwards <- sapply(psych.keys[1:9,6], as.character)
 
