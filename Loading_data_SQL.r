@@ -212,18 +212,18 @@ ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain'
 q <- ("SELECT a.mrn,a.symptom,
       max(
       (a.start < date(m.t1,'-7 days') 
-        AND ( (a.end > date(m.t1,'-7 days') )
-          OR ( a.end IS NULL ) ) ) 
+      AND ( (a.end > date(m.t1,'-7 days') )
+      OR ( a.end IS NULL ) ) ) 
       ) as t1_ad,
       max(
       (a.start < date(m.t2,'-7 days') 
-        AND ( (a.end > date(m.t2,'-7 days') )
-          OR ( a.end IS NULL ) ) ) 
+      AND ( (a.end > date(m.t2,'-7 days') )
+      OR ( a.end IS NULL ) ) ) 
       ) as t2_ad,
       max(
       (a.start < date(m.t3,'-7 days') 
-        AND ( (a.end > date(m.t3,'-7 days') )
-          OR ( a.end IS NULL ) ) ) 
+      AND ( (a.end > date(m.t3,'-7 days') )
+      OR ( a.end IS NULL ) ) ) 
       ) as t3_ad
       FROM adverse a
       JOIN master_list m
@@ -250,7 +250,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
         from master_list m, 
         (%s) s
         WHERE m.t1 is not null
-      UNION
+        UNION
         SELECT m.mrn, s.symptom, 2 tpt,
         exists(select 1 from adcount
         where ((adcount.mrn = m.mrn)
@@ -260,7 +260,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
         from master_list m, 
         (%s) s
         WHERE m.t2 is not null
-      UNION
+        UNION
         SELECT m.mrn, s.symptom, 3 tpt,
         exists(select 1 from adcount
         where ((adcount.mrn = m.mrn)
@@ -278,6 +278,73 @@ qqqq <- sprintf("CREATE VIEW adverse_breakout AS
                 %s;",qqq)
 
 dbExecute(con, qqqq)
+
+
+### LABS
+
+dbExecute(con, "DROP TABLE labs")
+dbExecute(con, "CREATE TABLE labs
+          (mrn integer not null,
+          lab text not null,
+          date date not null,
+          value real )")
+
+c18.path = paste(root,"CBC 18.xlsx",sep="") #RUN WITH CMP 18 also
+wb <- loadWorkbook(c18.path)
+sheets <- getSheets(wb)
+sheetnames <- names(sheets)
+
+for (i in 1:length( sheetnames ) ) {
+  mrn <- sheetnames[i]
+  curr.list <- read.xlsx( c18.path, sheetName = mrn )
+  cnames <- colnames(curr.list)
+  for (cname in tail(cnames,length(cnames)-1) ) {
+    slice <- curr.list[ c( cnames[1], cname) ]
+    for (j in 1:nrow(slice)) {
+      date <- getdate(slice[j,1])
+      value <- strsplit(as.character( slice[j,2] )," ")[[1]][1]
+      b <- c(mrn,cname,date,value)
+      s <- as.character( sapply(b,stringy) )
+      insert_str <- paste( s, collapse=",")
+      rs <- dbSendStatement(con, sprintf("INSERT INTO labs VALUES (%s);",insert_str) )
+      dbClearResult(rs)
+    }
+  }
+}
+
+dbGetQuery(con, "SELECT DISTINCT lab from labs;")
+
+all.labs.path = paste(root,"Labs All.xlsx",sep="")
+wb <- loadWorkbook(all.labs.path)
+
+labKeys <- read.xlsx( all.labs.path, sheetIndex = 1 )
+labKeys <- data.frame(lapply(labKeys, as.character), stringsAsFactors=FALSE)
+
+getLabName <- function(rawKey) {
+  for (i in 1:nrow(labKeys)) {
+    if (rawKey %in% labKeys[i,2:6] ) {
+      return(labKeys[i,1])
+    }
+  }
+}
+all.labs.csvpath <- paste(root,"Labs All.txt",sep="")
+
+csv  <- file(all.labs.csvpath, open = "r")
+oneLine <- readLines(csv, n = 1)
+while (length(oneLine <- readLines(csv, n = 1)) > 0) {
+  myLine <- unlist((strsplit(oneLine, "\t")))
+  date <-  as.character( as.Date(myLine[3] , "%m/%d/%Y") )
+  mrn <- myLine[2]
+  value <- myLine[5]
+  lab <- getLabName ( myLine[4] )
+  b <- c(mrn,lab,date,value)
+  if (length(b)<4) {next}
+  s <- as.character( sapply(b,stringy) )
+  insert_str <- paste( s, collapse=",")
+  rs <- dbSendStatement(con, sprintf("INSERT INTO labs VALUES (%s);",insert_str) )
+  dbClearResult(rs)
+} 
+close(csv)
 
 # 
 # for (tpt in 1:3) {
