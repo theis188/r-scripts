@@ -281,6 +281,10 @@ dbExecute(con, qqqq)
 
 
 ### LABS
+#
+#
+#
+#
 
 dbExecute(con, "DROP TABLE labs")
 dbExecute(con, "CREATE TABLE labs
@@ -346,6 +350,98 @@ while (length(oneLine <- readLines(csv, n = 1)) > 0) {
 } 
 close(csv)
 
+#### VITALS
+#
+#
+#
+#
+
+dbExecute(con, "DROP TABLE vitals")
+dbExecute(con, "CREATE TABLE vitals
+          (mrn integer not null,
+          vital text not null,
+          date date not null,
+          value real )")
+
+v18.path = paste(root,"Vitals 18.xlsx",sep="") #RUN WITH CMP 18 also
+wb <- loadWorkbook(v18.path)
+sheets <- getSheets(wb)
+sheetnames <- names(sheets)
+
+for (i in 1:length( sheetnames ) ) {
+  mrn <- sheetnames[i]
+  curr.list <- read.xlsx( v18.path, sheetName = mrn )
+  cnames <- colnames(curr.list)
+  for (cname in tail(cnames,length(cnames)-1) ) {
+    slice <- curr.list[ c( cnames[1], cname) ]
+    for (j in 1:nrow(slice)) {
+      date <- getdate(slice[j,1])
+      value <- strsplit(as.character( slice[j,2] )," ")[[1]][1]
+      b <- c(mrn,cname,date,value)
+      s <- as.character( sapply(b,stringy) )
+      insert_str <- paste( s, collapse=",")
+      rs <- dbSendStatement(con, sprintf("INSERT INTO vitals VALUES (%s);",insert_str) )
+      dbClearResult(rs)
+    }
+  }
+}
+
+vitals.key.path <- paste(root,"Vitals Key.xlsx",sep="")
+vitals.key <- read.xlsx(vitals.key.path, sheetIndex = 1)
+vitals.key <- data.frame(lapply(vitals.key, as.character), stringsAsFactors=FALSE)
+
+all.vitals.csvpath <- paste(root,"Vitals All.csv",sep="")
+
+csv  <- file(all.vitals.csvpath, open = "r")
+oneLine <- readLines(csv, n = 1)
+while (length(oneLine <- readLines(csv, n = 1)) > 0) {
+  myLine <- unlist((strsplit(oneLine, ",")))
+  date <-  as.character( as.Date(myLine[3] , "%m/%d/%Y") )
+  mrn <- myLine[2]
+  value <- strsplit(as.character( myLine[5] ),"/")[[1]][1]
+  vital <- vitals.key [ vitals.key[,2]==myLine[4], 1 ] 
+  if ( length(vital)==0 ) {next}
+  if (vital=="Weight (lb)") {value<-as.character( as.numeric(value)*2.2 )}
+  b <- c(mrn,vital,date,value)
+  if (length(b)<4) {next}
+  s <- as.character( sapply(b,stringy) )
+  insert_str <- paste( s, collapse=",")
+  rs <- dbSendStatement(con, sprintf("INSERT INTO vitals VALUES (%s);",insert_str) )
+  dbClearResult(rs)
+} 
+close(csv)
+
+### DEMONGRAPHICX
+#
+#
+#
+#
+
+dbExecute(con, "DROP TABLE demo")
+dbExecute(con, "CREATE TABLE demo
+          (mrn integer not null,
+          characteristic text not null,
+          value text not null )")
+
+demo.path <- paste(root,"Demographics.xlsx",sep="")
+
+demo <- read.xlsx(demo.path, sheetIndex=1)
+demo <- data.frame(lapply(demo, as.character), stringsAsFactors=FALSE)
+
+cnames <- colnames(demo)
+for (i in 1:nrow(demo) ) {
+  for ( cname in tail(cnames,length(cnames)-1) ) {
+    slice <- demo[i,] [ c(cnames[1],cname) ]
+    mrn <- slice[,1]
+    value <- slice[,2]
+    b <- c(mrn,cname,value)
+    if (value=="Unknown") {next}
+    s <- as.character( sapply(b,stringy) )
+    insert_str <- paste( s, collapse=",")
+    rs <- dbSendStatement(con, sprintf("INSERT INTO demo VALUES (%s);",insert_str) )
+    dbClearResult(rs)
+  }
+}
 # 
 # for (tpt in 1:3) {
 #   for (symptom in symptoms) {
