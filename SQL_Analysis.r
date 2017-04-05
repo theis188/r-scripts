@@ -108,6 +108,9 @@ squares$po = ( squares$yy + squares$nn ) / (squares$yy + squares$yn + squares$nn
 squares$my = (squares$yy + squares$yn) * (squares$yy + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
 squares$mn = (squares$nn + squares$yn) * (squares$nn + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
 squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn + squares$ny)
+squares$mc = (squares$yn - squares$ny)^2 / (squares$yn + squares$ny)
+squares$mcp = 1-pchisq(squares$mc, df=1)
+
 kstr <- paste("k",qa,sep="")
 squares[c( kstr )] = (squares$po - squares$pe) / (1 - squares$pe)
 kslice <- squares[c("sub.symptom",kstr)]

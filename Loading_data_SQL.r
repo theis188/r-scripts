@@ -206,8 +206,8 @@ for (i in 1:nrow( adverse.events ) ) {
 rs <- dbGetQuery(con, "SELECT * FROM adverse limit 30;")
 rs
 
-sql_symp <- "SELECT 'Dizzy' symptom UNION SELECT 'Vomit' UNION SELECT 'Constipation' UNION SELECT 'Appetite' UNION SELECT 'Fatigue' UNION SELECT 'Nausea' UNION SELECT 'Pain' UNION SELECT 'Sleep' UNION SELECT 'SOB' UNION SELECT 'Cough' UNION SELECT 'Wt Loss'"
-ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss'"
+sql_symp <- "SELECT 'Dizzy' symptom UNION SELECT 'Vomit' UNION SELECT 'Constipation' UNION SELECT 'Appetite' UNION SELECT 'Fatigue' UNION SELECT 'Nausea' UNION SELECT 'Pain' UNION SELECT 'Sleep' UNION SELECT 'SOB' UNION SELECT 'Cough' UNION SELECT 'Wt Loss' UNION SELECT 'Depression' UNION SELECT 'Anxiety'"
+ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss','Depression','Anxiety'"
 
 q <- ("SELECT a.mrn,a.symptom,
       max(
@@ -236,6 +236,7 @@ q <- sprintf(q,ros_symp)
 
 rs <- dbGetQuery(con, q)
 
+dbExecute(con, "DROP VIEW adcount")
 qq <- sprintf("CREATE VIEW adcount AS
               %s",q)
 
@@ -274,6 +275,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
 
 qqq <- sprintf(qqq,sql_symp,sql_symp,sql_symp)
 
+dbExecute(con, "DROP VIEW adverse_breakout")
 qqqq <- sprintf("CREATE VIEW adverse_breakout AS
                 %s;",qqq)
 
@@ -442,6 +444,41 @@ for (i in 1:nrow(demo) ) {
     dbClearResult(rs)
   }
 }
+
+#### Depress
+#
+#
+#
+#
+
+dbExecute(con, "DROP TABLE depress")
+dbExecute(con, "CREATE TABLE depress
+          (psych_id integer not null,
+          symptom text not null,
+          tpt integer not null,
+          value integer not null)")
+
+depkeys <- psych.keys[c('dep','depkey')][1:6,]
+
+for ( i in 1:nrow(depkeys) ) {
+  key <- as.character( depkeys[i,2] )
+  symptom <- as.character( depkeys[i,1] )
+  pos = tail(gregexpr('_',key)[[1]], n=1)
+  tpt = as.integer( substr (key,pos-1,pos-1) )
+  kslice <- psych.data[c('ID',key)]
+  for ( j in 1:nrow(kslice) ) {
+    p.id <- kslice[j,1]
+    value <- as.integer( kslice[j,2] )
+    if (is.na(value)) {next}
+    b <- c(p.id,symptom,tpt,value)
+    s <- as.character( sapply(b,stringy) )
+    insert_str <- paste( s, collapse=",")
+    rs <- dbSendStatement(con, sprintf("INSERT INTO depress VALUES (%s);",insert_str) )
+    dbClearResult(rs)
+  }
+}
+
+
 # 
 # for (tpt in 1:3) {
 #   for (symptom in symptoms) {
