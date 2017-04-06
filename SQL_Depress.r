@@ -50,13 +50,15 @@ for (i in list( c('33','Anxiety'), c('16','Depression') ) ) {
     squares$mcp = 1-pchisq(squares$mc, df=1)
     squares$k = (squares$po - squares$pe) / (1 - squares$pe)
     kslice<-squares[c('yy','nn','yn','ny','k','mcp')]
-    kslice$sub = paste(l1,l2)
+    kslice$ds1 = l1
+    kslice$ds2 = l2
     kslice$symptom = sym
     if (ncol(d) == 0) {
       d<-kslice
     } else {
       d<-rbind(d,kslice)
     }
-    
   }
 }
+
+write.xlsx( d , "D:/R/Tables/depress table.xlsx" )

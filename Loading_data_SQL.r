@@ -131,18 +131,17 @@ dbExecute(con, "CREATE TABLE ros
 ros.path = paste(root,'ROSandPE Extra.xlsx',sep="")
 # ros.data <- read.xlsx(ros.path, sheetIndex=1)
 
-symptoms <- as.character(psych.keys[1:13,2])
+symptoms <- c('Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss','Depression','Anxiety','Diarrhea','Hair Loss','Rash')
 
 excuses <- c("X")
 
-if (sl[k,2] %in% excuses) next
 
 for (tpt in 1:3) {
   ros.data <- read.xlsx(ros.path, sheetIndex=tpt)
   for (symptom in symptoms) {
     sl <- ros.data[ c("Patient.MRN", gsub(" ",".",symptom) ) ]
     for (i in 1: length(  sl[,1] ) ) {
-      if (sl[i,2] %in% excuses) next
+      if (sl[i,2] %in% excuses) {next}
       ins_v <- c(as.character( sl[i,1] ),
                  as.character( tpt ),
                  symptom,
@@ -206,8 +205,8 @@ for (i in 1:nrow( adverse.events ) ) {
 rs <- dbGetQuery(con, "SELECT * FROM adverse limit 30;")
 rs
 
-sql_symp <- "SELECT 'Dizzy' symptom UNION SELECT 'Vomit' UNION SELECT 'Constipation' UNION SELECT 'Appetite' UNION SELECT 'Fatigue' UNION SELECT 'Nausea' UNION SELECT 'Pain' UNION SELECT 'Sleep' UNION SELECT 'SOB' UNION SELECT 'Cough' UNION SELECT 'Wt Loss' UNION SELECT 'Depression' UNION SELECT 'Anxiety'"
-ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss','Depression','Anxiety'"
+sql_symp <- "SELECT 'Dizzy' symptom UNION SELECT 'Vomit' UNION SELECT 'Constipation' UNION SELECT 'Appetite' UNION SELECT 'Fatigue' UNION SELECT 'Nausea' UNION SELECT 'Pain' UNION SELECT 'Sleep' UNION SELECT 'SOB' UNION SELECT 'Cough' UNION SELECT 'Wt Loss' UNION SELECT 'Depression' UNION SELECT 'Anxiety' UNION SELECT 'Diarrhea' UNION SELECT 'Hair Loss' UNION SELECT 'Rash'"
+ros_symp <- "'Dizzy','Vomit','Constipation','Appetite','Fatigue','Nausea','Pain','Sleep','SOB','Cough','Wt Loss','Depression','Anxiety','Diarrhea','Hair Loss','Rash'"
 
 q <- ("SELECT a.mrn,a.symptom,
       max(

@@ -90,7 +90,7 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   posag_q <- sprintf(posag_s,qa,q)
   totag_q <- sprintf(totag_s,qa,q)
   patcount_q <- sprintf(patcount_s,qa,q)
-  advcount_q <- sprintf(phycount_s,qa,q)
+  advcount_q <- sprintf(advcount_s,qa,q)
   totcount_q <- sprintf(totcount_s,qa,q)
   squares_q <-sprintf(squares_s,q)
   
@@ -98,7 +98,7 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   posag <- dbGetQuery(con, posag_q)
   totag <- dbGetQuery(con, totag_q)
   patcount <- dbGetQuery(con, patcount_q)
-  advcount <- dbGetQuery(con, phycount_q)
+  advcount <- dbGetQuery(con, advcount_q)
   totcount <- dbGetQuery(con, totcount_q)
   squares <- dbGetQuery(con, squares_q)
   
@@ -110,8 +110,8 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   squares[c( kstr )] = (squares$po - squares$pe) / (1 - squares$pe)
   kslice <- squares[c("sub.symptom",kstr)]
   
-  li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, patcount, phycount, totcount, kslice))
+  li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, patcount, advcount, totcount, kslice))
   
 }
 
-Reduce(function(...) merge(..., all=TRUE), li) 
+write.xlsx( Reduce(function(...) merge(..., all=TRUE), li) , "D:/R/Tables/psych adverse table.xlsx" )
