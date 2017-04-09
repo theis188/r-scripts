@@ -294,7 +294,7 @@ dbExecute(con, "CREATE TABLE labs
           date date not null,
           value real )")
 
-c18.path = paste(root,"CBC 18.xlsx",sep="") #RUN WITH CMP 18 also
+c18.path = paste(root,"CMP 18.xlsx",sep="") #RUN WITH CMP 18 also
 wb <- loadWorkbook(c18.path)
 sheets <- getSheets(wb)
 sheetnames <- names(sheets)
@@ -319,10 +319,10 @@ for (i in 1:length( sheetnames ) ) {
 
 dbGetQuery(con, "SELECT DISTINCT lab from labs;")
 
-all.labs.path = paste(root,"Labs All.xlsx",sep="")
+all.labs.key.path = paste(root,"Labs All.xlsx",sep="")
 wb <- loadWorkbook(all.labs.path)
 
-labKeys <- read.xlsx( all.labs.path, sheetIndex = 1 )
+labKeys <- read.xlsx( all.labs.key.path, sheetIndex = 1 )
 labKeys <- data.frame(lapply(labKeys, as.character), stringsAsFactors=FALSE)
 
 getLabName <- function(rawKey) {
@@ -364,7 +364,7 @@ dbExecute(con, "CREATE TABLE vitals
           date date not null,
           value real )")
 
-v18.path = paste(root,"Vitals 18.xlsx",sep="") #RUN WITH CMP 18 also
+v18.path = paste(root,"Vitals 18.xlsx",sep="")
 wb <- loadWorkbook(v18.path)
 sheets <- getSheets(wb)
 sheetnames <- names(sheets)
@@ -374,11 +374,19 @@ for (i in 1:length( sheetnames ) ) {
   curr.list <- read.xlsx( v18.path, sheetName = mrn )
   cnames <- colnames(curr.list)
   for (cname in tail(cnames,length(cnames)-1) ) {
+    vital <- cname
+    if (cname=="Weight..lb.") {
+      vital <- "Weight"
+    }
     slice <- curr.list[ c( cnames[1], cname) ]
     for (j in 1:nrow(slice)) {
       date <- getdate(slice[j,1])
-      value <- strsplit(as.character( slice[j,2] )," ")[[1]][1]
-      b <- c(mrn,cname,date,value)
+      orvalue = slice[j,2]
+      value <- strsplit(as.character( orvalue )," ")[[1]][1]
+      if (grepl('kg', orvalue)) {
+        value <- as.character(as.numeric(value) * 2.2 )
+      }
+      b <- c(mrn,vital,date,value)
       s <- as.character( sapply(b,stringy) )
       insert_str <- paste( s, collapse=",")
       rs <- dbSendStatement(con, sprintf("INSERT INTO vitals VALUES (%s);",insert_str) )
@@ -402,7 +410,9 @@ while (length(oneLine <- readLines(csv, n = 1)) > 0) {
   value <- strsplit(as.character( myLine[5] ),"/")[[1]][1]
   vital <- vitals.key [ vitals.key[,2]==myLine[4], 1 ] 
   if ( length(vital)==0 ) {next}
-  if (vital=="Weight (lb)") {value<-as.character( as.numeric(value)*2.2 )}
+  if (vital=="Weight") {
+    value<-as.character( as.numeric(value)*2.2 )
+  }
   b <- c(mrn,vital,date,value)
   if (length(b)<4) {next}
   s <- as.character( sapply(b,stringy) )
@@ -476,6 +486,56 @@ for ( i in 1:nrow(depkeys) ) {
     dbClearResult(rs)
   }
 }
+
+
+####### PE Data
+#
+#
+#
+#
+
+
+dbExecute(con, "DROP TABLE pe")
+dbExecute(con, "CREATE TABLE pe
+          (mrn integer not null,
+          tpt integer not null,
+          symptom text not null,
+          recorder text not null,
+          response integer not null,
+          primary key (mrn, tpt, symptom) )")
+
+
+pe.path = paste(root,'ROSandPE Extra.xlsx',sep="")
+
+symptoms <- c('ECOG','Const','Head','Eyes','ENMT','Neck','H.O','Resp','Cardio','Abd','MSK','Skin.hair','Neuro','Psych')
+excuses <- c("X")
+
+for (tpt in 1:3) {
+  pe.data <- read.xlsx(pe.path, sheetIndex=tpt+3)
+  for (symptom in symptoms) {
+    sl <- pe.data[ c("Patient.MRN",'Author' , symptom ) ]
+    for (i in 1: length(  sl[,1] ) ) {
+      mrn <- as.character ( sl [i,1] )
+      author <- strsplit(as.character( sl[i,2] )," ")[[1]][1] 
+      response <- as.character( sl[i,3] )
+      if (response %in% excuses) {next}
+      if (response == "U") {response <- 0}
+      ins_v <- c(mrn ,
+                 as.character( tpt ),
+                 symptom,
+                 author,
+                 as.character( response ) )
+      ins_s <- as.character( sapply(ins_v, stringy) )
+      ins_s <- paste(ins_s,collapse=",")
+      rs <- dbSendStatement(con, sprintf("INSERT INTO pe VALUES (%s);",ins_s) )
+      dbClearResult(rs)
+    }
+  }
+}
+
+
+
+
 
 
 # 
