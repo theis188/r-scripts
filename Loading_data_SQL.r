@@ -22,6 +22,14 @@ psych_stringy <- function(s) {
   return( toString(s)  )
 }
 
+getdate <- function (s) {
+  if (is.na(s)) { return("NULL") }
+  x <- as.character( s )
+  if (!grepl ('-',x) ) {x <- as.numeric(x) }
+  return ( as.character( as.Date( x, origin = "1899-12-30") ) )
+}
+
+
 ### Master List
 #
 #
@@ -250,6 +258,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
         from master_list m, 
         (%s) s
         WHERE m.t1 is not null
+        AND m.mrn in (SELECT distinct mrn from adverse)
         UNION
         SELECT m.mrn, s.symptom, 2 tpt,
         exists(select 1 from adcount
@@ -260,6 +269,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
         from master_list m, 
         (%s) s
         WHERE m.t2 is not null
+        AND m.mrn in (SELECT distinct mrn from adverse)
         UNION
         SELECT m.mrn, s.symptom, 3 tpt,
         exists(select 1 from adcount
@@ -270,6 +280,7 @@ qqq <- ("SELECT m.mrn, s.symptom, 1 tpt,
         from master_list m, 
         (%s) s
         WHERE m.t3 is not null
+        AND m.mrn in (SELECT distinct mrn from adverse)
         ")
 
 qqq <- sprintf(qqq,sql_symp,sql_symp,sql_symp)
@@ -294,7 +305,7 @@ dbExecute(con, "CREATE TABLE labs
           date date not null,
           value real )")
 
-c18.path = paste(root,"CMP 18.xlsx",sep="") #RUN WITH CMP 18 also
+c18.path = paste(root,"CBC 18.xlsx",sep="") #RUN WITH CMP 18 also
 wb <- loadWorkbook(c18.path)
 sheets <- getSheets(wb)
 sheetnames <- names(sheets)
@@ -383,8 +394,10 @@ for (i in 1:length( sheetnames ) ) {
       date <- getdate(slice[j,1])
       orvalue = slice[j,2]
       value <- strsplit(as.character( orvalue )," ")[[1]][1]
-      if (grepl('kg', orvalue)) {
-        value <- as.character(as.numeric(value) * 2.2 )
+      if (vital=="Weight") {
+        if (grepl('kg', orvalue)) {
+          value <- as.character(as.numeric(value) * 2.2 )
+        }
       }
       b <- c(mrn,vital,date,value)
       s <- as.character( sapply(b,stringy) )

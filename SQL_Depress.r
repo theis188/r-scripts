@@ -62,3 +62,4 @@ for (i in list( c('33','Anxiety'), c('16','Depression') ) ) {
 }
 
 write.xlsx( d , "D:/R/Tables/depress table.xlsx" )
+
