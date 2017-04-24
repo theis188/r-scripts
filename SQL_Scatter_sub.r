@@ -81,7 +81,7 @@ q[["Hemoglobin"]] <- ("SELECT l.mrn, avg(value) avg_value FROM labs l
                       ")
 par(mfrow=c(3,3))
 for (vital in c('Albumin','BMI','Hemoglobin')) {
-  for (source in c('ros','psychFACT','adverse')) {
+  for (source in c('psychFACT','ros','adverse')) {
     q1 <- q[[vital]]
     q2 <- q[[source]]
     a1 <- dbGetQuery(con, q1)
@@ -92,7 +92,7 @@ for (vital in c('Albumin','BMI','Hemoglobin')) {
     slope <- summary(model)$coefficients[2,1]
     intercept <- summary(model)$coefficients[1,1]
     l1 <- paste("slope = ", as.character( round( slope , digits = 2 ) ), sep="" )
-    l2 <- paste("p = ", as.character( round( summary(model)$coefficients[2,4], digits = 2 ) ), sep="" )
+    l2 <- paste("p = ", as.character( round( summary(model)$coefficients[2,4], digits = 3 ) ), sep="" )
     xlabl <- paste(l1,l2,sep='\n')
     xliml <- xlims[[vital]]
     x1 <- xliml[1]*0.9 + xliml[2]*0.1
@@ -102,7 +102,7 @@ for (vital in c('Albumin','BMI','Hemoglobin')) {
     par(mar=c(4.1,3.1,2.1,1.1) )
     plot(j$avg_value,
          j$symptom_count, 
-         pch=21,  
+         pch=21,
          bg="black",
          xlab=xlabl,
          ylab='',
@@ -111,3 +111,4 @@ for (vital in c('Albumin','BMI','Hemoglobin')) {
     lines(c(x1,x2),c(y1,y2),col="black")
   }
 }
+
