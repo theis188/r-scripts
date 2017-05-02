@@ -1,18 +1,14 @@
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 
-sub <- sprintf("SELECT 
+sub <- ("SELECT 
 ae.mrn, ae.symptom, ae.tpt, ae.result adv, (r.response='Y') phys
 FROM adverse_breakout ae
 JOIN ros r
 on ae.mrn = r.mrn
 and ae.tpt = r.tpt
 and ae.symptom = r.symptom
-",qqq)
+")
 
-qqqq <- sprintf("CREATE VIEW adverse_breakout AS
-              %s;",qqq)
-
-dbExecute(con, qqqq)
 
 totag_s <- ("SELECT
   sub.symptom,
@@ -36,7 +32,7 @@ negag_s <- ("SELECT
 
 aecount_s <- ("SELECT
                sub.symptom,
-               sum(sub.adv) patcount
+               sum(sub.adv) aecount
                from (%s) sub
                group by sub.symptom;")
 
@@ -84,5 +80,5 @@ squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn +
 squares$k = (squares$po - squares$pe) / (1 - squares$pe)
 kslice = kslice <- squares[c("sub.symptom","k")]
 
-Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, aecount, phycount, totcount, kslice))
+AdPhy <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, aecount, phycount, totcount, kslice))
 

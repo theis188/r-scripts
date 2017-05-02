@@ -119,5 +119,7 @@ li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag,
 
 }
 
-write.xlsx( Reduce(function(...) merge(..., all=TRUE), li) , "D:/R/RScripts/Hamhoon/ham.xlsx" )
+PatPhy <- Reduce(function(...) merge(..., all=TRUE), li) 
+
+write.xlsx( PatPhy, "D:/R/RScripts/Hamhoon/ham.xlsx" )
 

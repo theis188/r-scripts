@@ -3,9 +3,9 @@
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 li = list()
 
-# for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
+for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   
-for (i in list( c("MSAS","0","0"),c("FACT","1","3") ) ) { ## LOW CUTOFF
+# for (i in list( c("MSAS","0","0"),c("FACT","1","3") ) ) { ## LOW CUTOFF
   
   qa = i[1]
   lim = i[2]
@@ -116,5 +116,7 @@ for (i in list( c("MSAS","0","0"),c("FACT","1","3") ) ) { ## LOW CUTOFF
   
 }
 
-write.xlsx( Reduce(function(...) merge(..., all=TRUE), li) , "D:/R/Tables/psych adverse table.xlsx" )
+AdPat <- Reduce(function(...) merge(..., all=TRUE), li) 
+
+write.xlsx( AdPat , "D:/R/Tables/psych adverse table.xlsx")
 
