@@ -56,7 +56,8 @@ for (symptom in c("Anxiety","Depression")) {
     
     names(j)[names(j)==sq] <- "TASPSYCH"  
 
-    data.tpt <- data[data$tpt==tpt,][data$symptom==symptom,]
+    data.tpt <- data[data$tpt==tpt,]
+    data.tpt <- data.tpt[data.tpt$symptom==symptom,]
     
     
     if (tpt==1) {
@@ -73,7 +74,16 @@ for (symptom in c("Anxiety","Depression")) {
   }
 }
 
-FFinal$TASPSYCH <- (as.numeric(as.character(FFinal$TASPSYCH)) > 0) *1
+#######################
+#
+#  CHANGE
+#  
+#  CUTOFFFS
+#
+# HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE -----------V
+
+
+FFinal$TASPSYCH <- (as.numeric(as.character(FFinal$TASPSYCH)) > 1) *1
 FFinal$result <- NULL
 names(FFinal)[names(FFinal)=="TASPSYCH"] <- "result"
 FFinal$result[ is.na( FFinal$result ) ] <- 0
@@ -90,7 +100,7 @@ fli[['psych']] <- FFinal
 fli[['ros']] <- ros
 fli[['adverse']] <- adverse
 
-VIGGA <- data.frame()
+d <- data.frame()
 
 for ( combo in list(c('psych','ros'),
                 c('psych','adverse'),
@@ -101,40 +111,43 @@ for ( combo in list(c('psych','ros'),
   l1 <- fli[[source1]]
   l2 <- fli[[source2]]
   
-  a <- merge( l1,l2,by=c('mrn','symptom','tpt'),suffixes=c('1','2') )
-  
-  col1 <- 'result1'
-  col2 <- 'result2'
-  
-  for (symptom in c("Anxiety","Depression")) {
-    squares <- a[a$symptom==symptom,]
-    squares$yy = (squares[col1]==1) & (squares[col2]==1)
-    squares$nn = squares[col1]==0 & squares[col2]==0
-    squares$yn = squares[col1]==1 & squares[col2]==0
-    squares$ny = squares[col1]==0 & squares[col2]==1
-    squares <- colSums(squares[c('yy','nn','yn','ny')])
-    squares <- data.frame(yy=squares['yy'],
-                          nn=squares['nn'],
-                          yn=squares['yn'],
-                          ny=squares['ny'])
+  next_rows <- get_kappa_from_dataframes(l1, l2, source1=source1, source2=source2)
     
-    squares$po = ( squares$yy + squares$nn ) / (squares$yy + squares$yn + squares$nn + squares$ny)
-    squares$my = (squares$yy + squares$yn) * (squares$yy + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
-    squares$mn = (squares$nn + squares$yn) * (squares$nn + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
-    squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn + squares$ny)
-    squares$k = (squares$po - squares$pe) / (1 - squares$pe)
-    kslice<-squares[c('yy','nn','yn','ny','k')]
-    kslice$ds1 = source1
-    kslice$ds2 = source2
-    kslice$symptom = symptom
+  # a <- merge( l1,l2,by=c('mrn','symptom','tpt'),suffixes=c('1','2') )
+  # 
+  # col1 <- 'result1'
+  # col2 <- 'result2'
+  
+  
+  # for (symptom in c("Anxiety","Depression")) {
+  #   squares <- a[a$symptom==symptom,]
+  #   squares$yy = (squares[col1]==1) & (squares[col2]==1)
+  #   squares$nn = squares[col1]==0 & squares[col2]==0
+  #   squares$yn = squares[col1]==1 & squares[col2]==0
+  #   squares$ny = squares[col1]==0 & squares[col2]==1
+  #   squares <- colSums(squares[c('yy','nn','yn','ny')])
+  #   squares <- data.frame(yy=squares['yy'],
+  #                         nn=squares['nn'],
+  #                         yn=squares['yn'],
+  #                         ny=squares['ny'])
+  #   
+  #   squares$po = ( squares$yy + squares$nn ) / (squares$yy + squares$yn + squares$nn + squares$ny)
+  #   squares$my = (squares$yy + squares$yn) * (squares$yy + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+  #   squares$mn = (squares$nn + squares$yn) * (squares$nn + squares$ny) / (squares$yy + squares$yn + squares$nn + squares$ny)
+  #   squares$pe = (squares$my + squares$mn) / (squares$yy + squares$yn + squares$nn + squares$ny)
+  #   squares$k = (squares$po - squares$pe) / (1 - squares$pe)
+  #   kslice<-squares[c('yy','nn','yn','ny','k')]
+  #   kslice$ds1 = source1
+  #   kslice$ds2 = source2
+  #   kslice$symptom = symptom
     
-    if (ncol(VIGGA) == 0) {
-      VIGGA<-kslice
+    if (ncol(d) == 0) {
+      d<-next_rows
     } else {
-      VIGGA<-rbind(VIGGA,kslice)
+      d<-rbind(d,next_rows)
     }
     
   }
 }
 
-
+# write.xlsx(VIGGA, 'D:/R/Tables/GE1_GE4_FACT_Comparison.xlsx')
