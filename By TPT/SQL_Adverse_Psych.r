@@ -3,6 +3,8 @@
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 li = list()
 
+for (tpt in 1:3) {
+
 for (i in list( c("MSAS","2","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   
 # for (i in list( c("MSAS","0","0"),c("FACT","1","3") ) ) { ## LOW CUTOFF
@@ -39,7 +41,8 @@ for (i in list( c("MSAS","2","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
                on m.mrn = a.mrn
                and p.tpt = a.tpt
                and p.symptom = a.symptom
-               where p.qa = '%s' ",qa,lim,flim,lim,qa )
+               where p.qa = '%s' 
+               and p.tpt = %s",qa,lim,flim,lim,qa,tpt )
   
   totag_s <- ("SELECT
               sub.symptom,
@@ -118,5 +121,11 @@ for (i in list( c("MSAS","2","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
 
 AdPat <- Reduce(function(...) merge(..., all=TRUE), li) 
 
-write.xlsx( AdPat , "D:/R/Tables/Redo/psych adverse table.xlsx")
+sName <- paste("TPT" ,as.character(tpt), sep="")
 
+app <- if(tpt==1) FALSE else TRUE
+
+write.xlsx( AdPat , "D:/R/Tables/By TPT/psych adverse table.xlsx" , 
+            sheetName = sName, append = app)
+
+}

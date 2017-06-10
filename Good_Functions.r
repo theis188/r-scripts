@@ -7,8 +7,8 @@ get_kappa_from_dataframes <- function(l1,l2,source1 = 'source1',source2 = 'sourc
   
   # source1 <- "ACL-MCL"
   # source2 <- "MFACT"
-  # col1 <- 'result1'
-  # col2 <- 'result2'
+  col1 <- 'result1'
+  col2 <- 'result2'
   
   symptoms <- unique(a$symptom)
   

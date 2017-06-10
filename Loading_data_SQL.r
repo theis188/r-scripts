@@ -507,7 +507,6 @@ for ( i in 1:nrow(depkeys) ) {
 #
 #
 
-
 dbExecute(con, "DROP TABLE pe")
 dbExecute(con, "CREATE TABLE pe
           (mrn integer not null,
@@ -547,8 +546,39 @@ for (tpt in 1:3) {
 }
 
 
+###### MED DATA
+#
+#
+#
+#
+med.path = paste(root,'/Meds redcap.csv',sep="")
+dbExecute(con,"
+CREATE TABLE meds 
+(mrn integer not null,
+rx text not null,
+start_date date not null,
+end_date date,
+primary key(mrn,rx,start_date) ) ")
+con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 
 
+csv  <- file(med.path, open = "r")
+oneLine <- readLines(csv, n = 1)
+while (length(oneLine <- readLines(csv, n = 1)) > 0) {
+  myLine <- unlist((strsplit(oneLine, ",")))
+  start_date <-  as.character( as.Date(myLine[5] , "%m/%d/%Y") )
+  stop_date <- as.character( as.Date(myLine[6] , "%m/%d/%Y") )
+  mrn <- myLine[1]
+  rx <- myLine[2]
+  first_num <- gregexpr("[0-9]",rx)[[1]][1]
+  clean_rx <- substr(rx,0,first_num-2)
+  b <- c(mrn,clean_rx,start_date,stop_date)
+  s <- as.character( sapply(b,stringy) )
+  insert_str <- paste( s, collapse=",")
+  rs <- try(dbSendStatement(con, sprintf("INSERT INTO meds VALUES (%s);",insert_str) ))
+  if (class(rs) != 'try-error') {dbClearResult(rs)}
+} 
+close(csv)
 
 
 # 

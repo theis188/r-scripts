@@ -10,9 +10,9 @@ xlims[['Hemoglobin']] <- c(8,16)
 
 q <- list()
 
-q[["ros"]] <- ("SELECT mrn,avg(response=\"Y\")*16 symptom_count 
-               from ros
-               group by mrn
+q[["ros"]] <- ("SELECT mrn, avg(cnt) symptom_count 
+               from ( select mrn,tpt,sum(response=\"Y\") as cnt from ros group by mrn,tpt ) as inner
+               group by mrn;
                ")
 ## >= 2,2 for high cutoff - 3,1 for low
 q[["psychFACT"]] <- ("SELECT m.mrn, avg( CASE 
@@ -79,14 +79,15 @@ q[["Hemoglobin"]] <- ("SELECT l.mrn, avg(value) avg_value FROM labs l
                       AND lab=\"Hemoglobin\"
                       GROUP BY l.mrn
                       ")
-par(mfrow=c(3,3))
-for (vital in c('Albumin','BMI','Hemoglobin')) {
-  for (source in c('psychFACT','ros','adverse')) {
+par(mfrow=c(1,4))
+for (vital in c('Albumin')){#,'BMI','Hemoglobin')) {
+  for (source in c('psychMSAS','psychFACT','ros','adverse')) {
     q1 <- q[[vital]]
     q2 <- q[[source]]
     a1 <- dbGetQuery(con, q1)
     a2 <- dbGetQuery(con, q2)
     j <- merge(a1, a2)
+    # j <- j[ !(j$mrn %in% MRN.CONTROL), ]
     model <- lm(symptom_count ~ avg_value , data = j)
     print(summary(model))
     slope <- summary(model)$coefficients[2,1]
@@ -109,6 +110,7 @@ for (vital in c('Albumin','BMI','Hemoglobin')) {
          ylim=c(0,8),
          xlim= xliml)
     lines(c(x1,x2),c(y1,y2),col="black")
+    print(length( j$avg_value ))
   }
 }
 

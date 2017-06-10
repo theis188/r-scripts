@@ -3,7 +3,7 @@ source("D:/R/RScripts/Hamhoon/Good_Functions.r")
 
 # source("D:/R/RScripts/Hamhoon/SQL_Depress.r")
 
-MFACT <- FFinal
+MFACT <- FFinal ##### I FEEEL SADD NERBISS
 
 OTHER_FUCKING_QUERY <- ("SELECT d.symptom, m.mrn, d.tpt,
 (CASE WHEN d.symptom=\"Depression\" THEN value>16
@@ -13,7 +13,7 @@ join master_list m
 on m.psych_id = d.psych_id
 where symptom in ('Anxiety','Depression');  ")
 
- = data.frame()
+ # = data.frame()
 OTHER_RESULT <- dbGetQuery(con,OTHER_FUCKING_QUERY)
 
 source1<-"MFACT"

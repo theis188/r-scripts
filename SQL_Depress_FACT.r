@@ -148,6 +148,5 @@ for ( combo in list(c('psych','ros'),
     }
     
   }
-}
 
-# write.xlsx(VIGGA, 'D:/R/Tables/GE1_GE4_FACT_Comparison.xlsx')
+write.xlsx(d, 'D:/R/Tables/GE1_GE4_FACT_Comparison.xlsx')

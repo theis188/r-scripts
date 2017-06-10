@@ -99,6 +99,17 @@ aa$symptom = ( (aa$symptomFACT)==1  | (aa$symptomMSAS==1) )
 aaa <- dbGetQuery(con,qqq)
 
 j <- merge(aa,a)
+f <- j[j$symptomFACT==FALSE,]$bmi_difference
+t <- j[j$symptomFACT==TRUE,]$bmi_difference
+
+fx = rnorm(length(f),0,0.02)
+tx = rnorm(length(t),1,0.02)
+X = c(fx,tx)
+Y <- c(f,t)
+plot(X,Y,bg='black',pch=21,xlim=c(-0.5,1.5))
+
+boxplot(f,t)
+t.test(f,t)
 
 yy<- sum ( (j$lost_weight==TRUE) & (j$symptom==1 ) )
 yn<- sum ( (j$lost_weight==TRUE) & (j$symptom==0 ) )
@@ -118,6 +129,7 @@ spec = yy / (yy+yn)
 k= (po - pe) / (1 - pe)
 
 jj <- merge(a,aaa)
+
 
 plot(jj$bmi_difference,jj$symptom)
 cor(jj$bmi_difference,jj$symptom)

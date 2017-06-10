@@ -1,5 +1,7 @@
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 
+for (tpt in 1:3) {
+
 rs <- dbGetQuery(con, "SELECT distinct symptom FROM psych where qa=\"MSAS\";")
 
 li <- list()
@@ -39,7 +41,8 @@ join ros r
 on m.mrn = r.mrn
 and p.tpt = r.tpt
 and p.symptom = r.symptom
-where p.qa = '%s' ",qa,lim,flim,lim,qa )
+where p.qa = '%s' 
+and p.tpt=%s",qa,lim,flim,lim,qa,tpt )
 
 totag_s <- ("SELECT
   sub.symptom,
@@ -121,5 +124,10 @@ li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag,
 
 PatPhy <- Reduce(function(...) merge(..., all=TRUE), li) 
 
-write.xlsx( PatPhy, "D:/R/Tables/Redo/patient physician table.xlsx" )
+sName <- paste( "Sheet", as.character(tpt), sep="")
 
+app <- if(tpt==1) FALSE else TRUE
+
+write.xlsx( PatPhy, "D:/R/Tables/By TPT/pat phy kappas.xlsx", append = app, sheetName = sName )
+
+}

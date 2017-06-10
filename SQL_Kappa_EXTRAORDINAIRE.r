@@ -8,7 +8,7 @@ li=list()
 qli=list()
 tli=list()
 
-for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
+for (i in list( c("MSAS","2","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   
   qa = i[1]
   lim = i[2]
@@ -74,7 +74,6 @@ for (i in list( c("MSAS","1","0"),c("FACT","2","2") ) ) { ## HIGH CUTOFF
   squares[c( kstr )] = (squares$po - squares$pe) / (1 - squares$pe)
   MSASFACT <- squares[c("sub.symptom",kstr)]
   
-}
 
 
 names(AdPhy)[names(AdPhy) == 'k'] <- 'kAdversePhysician'
@@ -91,5 +90,5 @@ Many.K.Values <- Reduce(function(...) merge(..., all=TRUE),
                   MSASFACT[,c('sub.symptom','kMSASFACT')]
                 ))
 
-write.xlsx(Many.K.Values,'D:/R/Tables/Ultimate_Ham.xlsx')
+write.xlsx(Many.K.Values,'D:/R/Tables/Redo/kappa table.xlsx')
 

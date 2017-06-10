@@ -48,9 +48,9 @@ for (combo in list(c('ros','depress'),
       d <- rbind(d,next_rows)
     }
   }
-}
 
-write.xlsx( d , "D:/R/Tables/depress table.xlsx" )
+
+write.xlsx( d , "D:/R/Tables/Redo/depress table.xlsx" )
 
 
 
@@ -117,5 +117,4 @@ write.xlsx( d , "D:/R/Tables/depress table.xlsx" )
 
 
 
-write.xlsx( d , "D:/R/Tables/depress table.xlsx" )
 
