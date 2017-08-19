@@ -128,6 +128,7 @@ sName <- paste( "Sheet", as.character(tpt), sep="")
 
 app <- if(tpt==1) FALSE else TRUE
 
-write.xlsx( PatPhy, "D:/R/Tables/By TPT/pat phy kappas.xlsx", append = app, sheetName = sName )
+write.xlsx( PatPhy, "D:/R/Tables/Redo/By TPT/pat phy kappas.xlsx", append = app, sheetName = sName )
 
 }
+

@@ -125,7 +125,7 @@ sName <- paste("TPT" ,as.character(tpt), sep="")
 
 app <- if(tpt==1) FALSE else TRUE
 
-write.xlsx( AdPat , "D:/R/Tables/By TPT/psych adverse table.xlsx" , 
+write.xlsx( AdPat , "D:/R/Tables/Redo/By TPT/psych adverse table.xlsx" , 
             sheetName = sName, append = app)
 
 }

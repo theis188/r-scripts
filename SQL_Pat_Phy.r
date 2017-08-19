@@ -31,7 +31,7 @@ q <- sprintf("SELECT
       ELSE 0
     END
   END as patient, 
-  (r.response=='Y') physician
+  (ifnull(r.response,0)=='Y') physician
 from psych p
 join master_list m
 on m.psych_id = p.psych_id
@@ -114,7 +114,7 @@ squares$mcp = 1-pchisq(squares$mc, df=1)
 kstr <- paste("k",qa,sep="")
 squares[c( kstr )] = (squares$po - squares$pe) / (1 - squares$pe)
 kslice <- squares[c("sub.symptom",kstr)]
-
+if (qa=="MSAS") {print(squares)}
 li[[qa]] <- Reduce(function(...) merge(..., all=TRUE), list(negag, posag, totag, patcount, phycount, totcount, kslice))
 
 }

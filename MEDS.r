@@ -26,7 +26,7 @@ for (symptom in c("Anxiety","Insomnia")) {
 }
 
 
-ddd <- ("SELECT distinct o.mrn id,o.symptom,m.rx,m.start_date rx_start, o.date symptom_start from other_patients o
+ddd <- ("SELECT o.mrn id,o.symptom,m.rx,m.start_date rx_start, o.date symptom_start from other_patients o
         join meds m
         on m.mrn = o.mrn
         where ( (julianday(m.start_date) < julianday(o.date) + 30)
@@ -35,11 +35,42 @@ ddd <- ("SELECT distinct o.mrn id,o.symptom,m.rx,m.start_date rx_start, o.date s
 
 
 
+ddd <- ("SELECT DISTINCT a.mrn, dep.dep, anx.anx, inso.inso, m.rx, m.start_date
+        from adverse_breakout a
+        join
+        (select mrn, max(result) dep from adverse_breakout where symptom=\"Depression\" group by mrn) dep
+        on a.mrn = dep.mrn
+        join
+        (select mrn, max(result) anx from adverse_breakout where symptom=\"Anxiety\" group by mrn) anx
+        on a.mrn = anx.mrn
+        join        
+        (select mrn, max(result) inso from adverse_breakout where symptom=\"Sleep\" group by mrn) inso
+        on a.mrn = inso.mrn
+        join meds m
+        on m.mrn = a.mrn
+        and ( (julianday(m.start_date) < julianday('2015-10-01') + 30)
+        and ( (m.end_date is null) or ( julianday( m.end_date ) > julianday('2015-10-01') - 30 ) )  );
+        ")
+
+ddddddddd <- ("SELECT DISTINCT a.mrn, dep.dep, anx.anx, inso.inso
+        from adverse_breakout a
+              join
+              (select mrn, max(result) dep from adverse_breakout where symptom=\"Depression\" group by mrn) dep
+              on a.mrn = dep.mrn
+              join
+              (select mrn, max(result) anx from adverse_breakout where symptom=\"Anxiety\" group by mrn) anx
+              on a.mrn = anx.mrn
+              join        
+              (select mrn, max(result) inso from adverse_breakout where symptom=\"Sleep\" group by mrn) inso
+              on a.mrn = inso.mrn;
+              ")
 
 
-BLUMBY <- dbGetQuery(con, ddd)
-
-write.xlsx(BLUMBY, "D:/R/Tables/BLUMBY.xlsx")
+BLUMBY <- dbGetQuery(con, ddddddddd)
+table(BLUMBY$dep)
+table(BLUMBY$anx)
+table(BLUMBY$inso)
+write.xlsx(BLUMBY, "D:/R/Tables/HAM BLUMBY 2.xlsx")
 
 
 
