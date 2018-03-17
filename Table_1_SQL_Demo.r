@@ -83,6 +83,18 @@ b <- rbind(b, 'mean pkyr',mean(as.numeric( a$value ) ) )
 b <- rbind(b, 'sd pkyr',sd(as.numeric( a$value )) )
 hist( as.numeric( a$value ) )
 
+q<- ("SELECT d1.characteristic,d2.value from demo d1
+     JOIN demo d2
+     ON d1.characteristic =\"Smoking.Status\" 
+     AND d1.value IN (\"Current Smoker\",\"Former smoker\")
+     AND d2.characteristic = \"Pack.years.\"
+     AND d1.mrn = d2.mrn;
+")
+a <- dbGetQuery(con, q)
+mean(as.numeric( a$value ) )
+sd(as.numeric( a$value ) )
+
+
 q <- (" SELECT value, count(value) count from demo
 WHERE characteristic = \"Type.of.Treatment\"
 group by value

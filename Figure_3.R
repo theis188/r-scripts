@@ -1,7 +1,9 @@
+root <- "C:/Users/Matthew/Desktop/Correlative Project/PsychEDCEMR/R Data/"
 psych.path = paste(root,"LWLC Data File for Collaboration JCK 032017.xlsx",sep="")
+library(xlsx)
 psych.data <- read.xlsx(psych.path,sheetIndex = 1)
 library(ggplot2)
-
+library(RSQLite)
 con <- dbConnect(RSQLite::SQLite(), "D:/R/sqldb.db")
 
 q <- (" SELECT mrn, tpt, recorder, response 
@@ -9,7 +11,11 @@ from pe where symptom=\"ECOG\"
 ")
 
 ecog <- dbGetQuery(con,q)
-  
+ 
+cq <- ("SELECT DISTINCT mrn from adverse_breakout;")
+
+clinical_mrns <- dbGetQuery(con,cq)
+
 qq <- (
   "SELECT mrn,psych_id from master_list;"
 )
@@ -18,9 +24,9 @@ ml <- dbGetQuery(con,qq)
 
 sfq1 <- 'FACT_fu_T%s_1' ## GF1
 
-sfq2 <- 'FACT_ph_T%s_7' ## GP7 FUCK THIS BULLSHIT
+sfq2 <- 'FACT_ph_T%s_7' ## GP7 
 
-
+# ecog <- ecog[ ecog$mrn %in% clinical_mrns$mrn, ]
 
 for (tpt in 1:3) {
   sq1 <- sprintf(sfq1, as.character(tpt) )
@@ -48,14 +54,35 @@ for (tpt in 1:3) {
 final = final[ final$GF1!='DISCONTINUED' , ]
 final = droplevels(final,reorder = FALSE)
 
-plot(final$response, final$GP7)
-plot(final$response, final$GF1)
+# plot(final$response, final$GP7)
+# plot(final$response, final$GF1)
 
-dfGP7 <- data.frame( table ( final[,c("response", "GP7")] ) )
-dfGF1 <- data.frame( table ( final[,c("response", "GF1")] ) )
+for (tpt in 1:3) {
+  # tpt<-3
+  dfGP7 <- data.frame( table ( final[ final$tpt==tpt ,c("response", "GP7")] ) )
+  dfGF1 <- data.frame( table ( final[ final$tpt==tpt ,c("response", "GF1")] ) )
+  
+  library(reshape)
+  
+  pivGP7 <- cast(dfGP7, response ~ GP7)
+  pivGF1 <- cast(dfGF1, response ~ GF1)
+  
+  chisq.test(pivGP7)
+  chisq.test(pivGF1)
+  
+  write.xlsx(dfGP7, sprintf("D:R/Tables/ECOG_Output_t%s.xlsx",as.character(tpt)), sheetName="GP7BED" )
+  write.xlsx(dfGF1, sprintf("D:R/Tables/ECOG_Output_t%s.xlsx",as.character(tpt)), sheetName="GF1WORK", append=TRUE )
+  
+}
 
-write.xlsx(dfGP7, "D:R/Tables/ECOG_Output.xlsx", sheetName="GP7 of BEDDIEBYE" )
-write.xlsx(dfGF1, "D:R/Tables/ECOG_Output.xlsx", sheetName="GF1 of WORKING (HAM HATES)", append=TRUE )
+dfGP7 <- data.frame( table ( final[ ,c("response", "GP7")] ) )
+dfGF1 <- data.frame( table ( final[ ,c("response", "GF1")] ) )
+
+chisq.test(pivGP7)
+chisq.test(pivGF1)
+
+write.xlsx(dfGP7, "D:R/Tables/ECOG_Output_clinical.xlsx", sheetName="GP7 of BEDDIEBYE" )
+write.xlsx(dfGF1, "D:R/Tables/ECOG_Output_clinical.xlsx", sheetName="GF1 of WORKING (HAM HATES)", append=TRUE )
 
 ggplot(dfGF1, aes(factor(response), Freq , fill = GF1 )) + 
   geom_bar(stat="identity", position = "dodge", width = 0.6) + 
